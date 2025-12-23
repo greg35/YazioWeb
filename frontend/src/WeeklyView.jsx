@@ -114,21 +114,20 @@ const WeeklyView = ({ data, onClose }) => {
                             <div key={index} className={`flex flex-col gap-4 ${isToday ? 'bg-violet-50/50 -m-2 p-2 rounded-xl ring-1 ring-violet-200 print:ring-0 print:bg-transparent print:m-0 print:p-0' : ''}`}>
                                 {/* Day Header */}
                                 <div className="border-b-2 border-slate-200 pb-2">
-                                    <div className="font-bold text-lg text-slate-800">{date.toLocaleDateString(undefined, { weekday: 'short' })}</div>
-                                    <div className="text-sm text-slate-500">{date.toLocaleDateString(undefined, { day: 'numeric', month: 'numeric' })}</div>
-
-                                    {dayData && (
-                                        <div className="mt-2 text-xs space-y-1">
-                                            <div className="flex justify-between font-bold text-slate-700">
-                                                <span>{formatNumber(dayData.calories)} kcal</span>
+                                    <div className="flex justify-between items-center">
+                                        <div className="font-bold text-lg text-slate-800">{date.toLocaleDateString(undefined, { weekday: 'short' })}</div>
+                                        {dayData && (
+                                            <div className="font-bold text-slate-700 text-sm">{formatNumber(dayData.calories)} kcal</div>
+                                        )}
+                                    </div>
+                                    <div className="flex justify-between items-center mt-1">
+                                        <div className="text-sm text-slate-500">{date.toLocaleDateString(undefined, { day: 'numeric', month: 'numeric' })}</div>
+                                        {dayData && (
+                                            <div className="text-xs text-slate-500">
+                                                {t('protein').charAt(0)}:{formatNumber(dayData.protein)}g / {t('carbs').charAt(0)}:{formatNumber(dayData.carbs)}g / {t('fat').charAt(0)}:{formatNumber(dayData.fat)}g
                                             </div>
-                                            <div className="flex justify-between text-slate-500">
-                                                <span>{t('protein').charAt(0)}: {formatNumber(dayData.protein)}g</span>
-                                                <span>{t('carbs').charAt(0)}: {formatNumber(dayData.carbs)}g</span>
-                                                <span>{t('fat').charAt(0)}: {formatNumber(dayData.fat)}g</span>
-                                            </div>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Meals */}
