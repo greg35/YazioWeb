@@ -1,5 +1,12 @@
 # YazioWeb
 
+<p align="center">
+  <img src="screenshots/01. Homepage.png" width="200" alt="Homepage" style="margin: 5px;">
+  <img src="screenshots/02. Weekly View.png" width="200" alt="Weekly View" style="margin: 5px;">
+  <img src="screenshots/03. Day Selector.png" width="200" alt="Day Selector" style="margin: 5px;">
+  <img src="screenshots/04. Day Details.png" width="200" alt="Day Details" style="margin: 5px;">
+</p>
+
 **[English](#english) | [Français](#français)**
 
 ---
