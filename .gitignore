@@ -5,6 +5,8 @@ __pycache__/
 venv/
 .env
 
+*.log
+
 # Node
 node_modules/
 dist/
@@ -12,5 +14,6 @@ dist/
 
 # Yazio Data
 days.json
+products.json
 backend/yazio-exporter/token.txt
 backend/yazio-exporter/YazioExport
