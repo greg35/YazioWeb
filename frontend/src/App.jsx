@@ -1,16 +1,22 @@
 import { useState, useEffect } from 'react';
 import { checkStatus, getData, refreshData, login } from './api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { RefreshCw, AlertCircle, CheckCircle, Droplets, Flame, Utensils, Settings, X } from 'lucide-react';
+import { RefreshCw, AlertCircle, CheckCircle, Droplets, Flame, Utensils, Settings, X, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import Calendar from './Calendar';
+import WeeklyView from './WeeklyView';
+import { LanguageProvider, useLanguage } from './LanguageContext';
 import './index.css';
 
 
-function App() {
+function AppContent() {
+  const { t, language, setLanguage } = useLanguage();
   const [status, setStatus] = useState(null);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [showWeeklyView, setShowWeeklyView] = useState(false);
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState(null);
@@ -98,17 +104,31 @@ function App() {
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
-            Yazio Dashboard
+            {t('app_title')}
           </h1>
-          <p className="text-slate-400">Track your nutrition journey</p>
+          <p className="text-slate-400">{t('app_subtitle')}</p>
         </div>
         <div className="flex gap-4">
+          <button
+            onClick={() => setShowCalendar(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all border border-slate-700"
+          >
+            <CalendarIcon className="w-5 h-5" />
+            {t('calendar')}
+          </button>
+          <button
+            onClick={() => setShowWeeklyView(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all border border-slate-700"
+          >
+            <CalendarIcon className="w-5 h-5" />
+            {t('weekly_view')}
+          </button>
           <button
             onClick={() => setShowLogin(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all border border-slate-700"
           >
             <Settings className="w-5 h-5" />
-            Settings
+            {t('settings')}
           </button>
           <button
             onClick={handleRefresh}
@@ -119,7 +139,7 @@ function App() {
               }`}
           >
             <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? 'Syncing...' : 'Sync Data'}
+            {loading ? t('syncing') : t('sync_data')}
           </button>
         </div>
       </header>
@@ -128,9 +148,9 @@ function App() {
         <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 mb-8 flex items-start gap-3 text-amber-200">
           <AlertCircle className="w-6 h-6 shrink-0" />
           <div>
-            <h3 className="font-semibold">Authentication Required</h3>
+            <h3 className="font-semibold">{t('auth_required')}</h3>
             <p className="text-sm opacity-90">
-              Token file not found. Please click "Settings" to log in with your Yazio credentials.
+              {t('auth_msg')}
             </p>
           </div>
         </div>
@@ -149,7 +169,7 @@ function App() {
           <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-6">
               <Flame className="w-5 h-5 text-orange-400" />
-              <h2 className="text-xl font-semibold">Calories Trend</h2>
+              <h2 className="text-xl font-semibold">{t('calories_trend')}</h2>
             </div>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -183,7 +203,7 @@ function App() {
           <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-6">
               <Utensils className="w-5 h-5 text-emerald-400" />
-              <h2 className="text-xl font-semibold">Macros Distribution</h2>
+              <h2 className="text-xl font-semibold">{t('macros_dist')}</h2>
             </div>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -206,9 +226,9 @@ function App() {
                     cursor={{ fill: '#334155', opacity: 0.4 }}
                   />
                   <Legend />
-                  <Bar dataKey="protein" stackId="a" fill="#10b981" name="Protein" />
-                  <Bar dataKey="carbs" stackId="a" fill="#3b82f6" name="Carbs" />
-                  <Bar dataKey="fat" stackId="a" fill="#eab308" name="Fat" />
+                  <Bar dataKey="protein" stackId="a" fill="#10b981" name={t('protein')} />
+                  <Bar dataKey="carbs" stackId="a" fill="#3b82f6" name={t('carbs')} />
+                  <Bar dataKey="fat" stackId="a" fill="#eab308" name={t('fat')} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -218,7 +238,7 @@ function App() {
           <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm lg:col-span-2">
             <div className="flex items-center gap-2 mb-6">
               <Droplets className="w-5 h-5 text-cyan-400" />
-              <h2 className="text-xl font-semibold">Water Intake</h2>
+              <h2 className="text-xl font-semibold">{t('water_intake')}</h2>
             </div>
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -230,7 +250,7 @@ function App() {
                     contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
                     cursor={{ fill: '#334155', opacity: 0.4 }}
                   />
-                  <Bar dataKey="water" fill="#06b6d4" name="Water (ml)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="water" fill="#06b6d4" name={t('water_unit')} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -238,7 +258,7 @@ function App() {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center h-64 text-slate-500">
-          <p>No data available. Click "Sync Data" to fetch your latest stats.</p>
+          <p>{t('no_data')}</p>
         </div>
       )}
 
@@ -253,7 +273,33 @@ function App() {
               <X className="w-6 h-6" />
             </button>
 
-            <h2 className="text-2xl font-bold mb-6 text-white">Yazio Login</h2>
+            <h2 className="text-2xl font-bold mb-6 text-white">{t('settings')}</h2>
+
+            <div className="mb-8 pb-8 border-b border-slate-700">
+              <label className="block text-sm font-medium text-slate-300 mb-2">{t('language')}</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setLanguage('fr')}
+                  className={`flex-1 py-2 rounded-lg font-medium transition-all ${language === 'fr'
+                    ? 'bg-violet-600 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    }`}
+                >
+                  Français
+                </button>
+                <button
+                  onClick={() => setLanguage('en')}
+                  className={`flex-1 py-2 rounded-lg font-medium transition-all ${language === 'en'
+                    ? 'bg-violet-600 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    }`}
+                >
+                  English
+                </button>
+              </div>
+            </div>
+
+            <h3 className="text-xl font-bold mb-4 text-white">{t('login_title')}</h3>
 
             {loginError && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-6 flex items-center gap-2 text-red-200 text-sm">
@@ -264,7 +310,7 @@ function App() {
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">{t('email')}</label>
                 <input
                   type="email"
                   required
@@ -276,7 +322,7 @@ function App() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">{t('password')}</label>
                 <input
                   type="password"
                   required
@@ -295,11 +341,31 @@ function App() {
                   : 'bg-violet-600 hover:bg-violet-700 text-white shadow-lg hover:shadow-violet-500/25'
                   }`}
               >
-                {loginLoading ? 'Logging in...' : 'Login'}
+                {loginLoading ? t('logging_in') : t('login_btn')}
               </button>
             </form>
           </div>
         </div>
+      )}
+
+      {/* Calendar Modal */}
+      {showCalendar && data && (
+        <Calendar
+          data={data}
+          onSelectDay={(day) => {
+            setSelectedDay(day);
+            setShowCalendar(false);
+          }}
+          onClose={() => setShowCalendar(false)}
+        />
+      )}
+
+      {/* Weekly View Modal */}
+      {showWeeklyView && data && (
+        <WeeklyView
+          data={data}
+          onClose={() => setShowWeeklyView(false)}
+        />
       )}
 
       {/* Meal Details Modal */}
@@ -307,9 +373,37 @@ function App() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-slate-800 rounded-2xl border border-slate-700 shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800/50 backdrop-blur-md sticky top-0 z-10">
-              <div>
-                <h2 className="text-2xl font-bold text-white">Daily Details</h2>
-                <p className="text-slate-400">{new Date(selectedDay.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => {
+                    const currentIndex = data.findIndex(d => d.date === selectedDay.date);
+                    if (currentIndex > 0) {
+                      setSelectedDay(data[currentIndex - 1]);
+                    }
+                  }}
+                  disabled={!data || data.findIndex(d => d.date === selectedDay.date) <= 0}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+
+                <div>
+                  <h2 className="text-2xl font-bold text-white">{t('daily_details')}</h2>
+                  <p className="text-slate-400">{new Date(selectedDay.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
+
+                <button
+                  onClick={() => {
+                    const currentIndex = data.findIndex(d => d.date === selectedDay.date);
+                    if (currentIndex < data.length - 1) {
+                      setSelectedDay(data[currentIndex + 1]);
+                    }
+                  }}
+                  disabled={!data || data.findIndex(d => d.date === selectedDay.date) >= data.length - 1}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
               </div>
               <button
                 onClick={() => setSelectedDay(null)}
@@ -323,19 +417,19 @@ function App() {
               {/* Summary Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-slate-700/30 p-4 rounded-xl border border-slate-700/50">
-                  <div className="text-slate-400 text-sm mb-1">Calories</div>
+                  <div className="text-slate-400 text-sm mb-1">{t('calories')}</div>
                   <div className="text-2xl font-bold text-orange-400">{Math.round(selectedDay.calories)} <span className="text-sm font-normal text-slate-500">kcal</span></div>
                 </div>
                 <div className="bg-slate-700/30 p-4 rounded-xl border border-slate-700/50">
-                  <div className="text-slate-400 text-sm mb-1">Protein</div>
+                  <div className="text-slate-400 text-sm mb-1">{t('protein')}</div>
                   <div className="text-2xl font-bold text-emerald-400">{Math.round(selectedDay.protein)} <span className="text-sm font-normal text-slate-500">g</span></div>
                 </div>
                 <div className="bg-slate-700/30 p-4 rounded-xl border border-slate-700/50">
-                  <div className="text-slate-400 text-sm mb-1">Carbs</div>
+                  <div className="text-slate-400 text-sm mb-1">{t('carbs')}</div>
                   <div className="text-2xl font-bold text-blue-400">{Math.round(selectedDay.carbs)} <span className="text-sm font-normal text-slate-500">g</span></div>
                 </div>
                 <div className="bg-slate-700/30 p-4 rounded-xl border border-slate-700/50">
-                  <div className="text-slate-400 text-sm mb-1">Fat</div>
+                  <div className="text-slate-400 text-sm mb-1">{t('fat')}</div>
                   <div className="text-2xl font-bold text-yellow-400">{Math.round(selectedDay.fat)} <span className="text-sm font-normal text-slate-500">g</span></div>
                 </div>
               </div>
@@ -355,7 +449,7 @@ function App() {
                 return (
                   <div key={mealType} className="space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-700 pb-2">
-                      <h3 className="text-xl font-semibold capitalize text-violet-300">{mealType}</h3>
+                      <h3 className="text-xl font-semibold capitalize text-violet-300">{t(mealType)}</h3>
                       <div className="text-sm text-slate-400 font-mono">
                         {Math.round(mealTotals.calories)} kcal • P: {Math.round(mealTotals.protein)}g • C: {Math.round(mealTotals.carbs)}g • F: {Math.round(mealTotals.fat)}g
                       </div>
@@ -364,9 +458,9 @@ function App() {
                       {mealItems.map((item, idx) => (
                         <div key={idx} className="bg-slate-700/20 p-4 rounded-xl flex justify-between items-start hover:bg-slate-700/30 transition-colors">
                           <div>
-                            <div className="font-medium text-slate-200">{item.name || 'Unknown Item'}</div>
+                            <div className="font-medium text-slate-200">{item.name || t('unknown_item')}</div>
                             <div className="text-sm text-slate-500 mt-1">
-                              {item.amount && `${item.amount} ${item.serving || ''}`}
+                              {item.serving ? `${item.amount} ${t(item.base_unit || 'g')} (${item.serving_quantity} ${t(item.serving)})` : `${item.amount} ${t(item.base_unit || 'g')}`}
                             </div>
                           </div>
                           <div className="text-right text-sm">
@@ -388,6 +482,14 @@ function App() {
         </div>
       )}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }
 
