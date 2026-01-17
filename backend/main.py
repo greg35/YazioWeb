@@ -16,24 +16,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-EXPORTER_DIR = os.path.join(os.path.dirname(__file__), "yazio-exporter")
+DATA_DIR = "/data"
+EXPORTER_DIR = os.path.join(os.path.dirname(__file__), "backend", "yazio-exporter")
 EXPORTER_BIN = os.path.join(EXPORTER_DIR, "YazioExport")
-DATA_FILE = os.path.join(os.path.dirname(__file__), "..", "days.json")
-TOKEN_FILE = os.path.join(EXPORTER_DIR, "token.txt")
+DATA_FILE = os.path.join(DATA_DIR, "days.json")
+TOKEN_FILE = "token.txt"
 
 @app.get("/api/status")
 def get_status():
     """Check if exporter binary and token exist."""
     return {
         "exporter_exists": os.path.exists(EXPORTER_BIN),
-        "token_exists": os.path.exists(TOKEN_FILE),
+        "token_exists": os.path.exists(os.path.join(EXPORTER_DIR, TOKEN_FILE)),
         "data_exists": os.path.exists(DATA_FILE)
     }
 
 @app.get("/api/data")
 def get_data():
     """Return the content of days.json."""
-    PRODUCTS_FILE = os.path.join(os.path.dirname(__file__), "..", "products.json")
+    PRODUCTS_FILE = os.path.join(DATA_DIR, "products.json")
     
     if not os.path.exists(DATA_FILE):
         return {"error": "Data file not found"}
@@ -101,7 +102,7 @@ def refresh_data():
     """Run the exporter to refresh data."""
     if not os.path.exists(EXPORTER_BIN):
         raise HTTPException(status_code=500, detail="Exporter binary not found")
-    if not os.path.exists(TOKEN_FILE):
+    if not os.path.exists(os.path.join(EXPORTER_DIR, TOKEN_FILE)):
         raise HTTPException(status_code=400, detail="Token not found. Please login first.")
 
     # Command: ./YazioExport days -token token.txt -what all -out ../days.json
@@ -110,18 +111,18 @@ def refresh_data():
     cmd_days = [
         "./YazioExport",
         "days",
-        "-token", "token.txt",
+        "-token", TOKEN_FILE,
         "-what", "all",
-        "-out", os.path.abspath(DATA_FILE)
+        "-out", DATA_FILE
     ]
 
-    PRODUCTS_FILE = os.path.join(os.path.dirname(__file__), "..", "products.json")
+    PRODUCTS_FILE = os.path.join(DATA_DIR, "products.json")
     cmd_products = [
         "./YazioExport",
         "products",
-        "-token", "token.txt",
-        "-from", os.path.abspath(DATA_FILE),
-        "-o", os.path.abspath(PRODUCTS_FILE)
+        "-token", TOKEN_FILE,
+        "-from", DATA_FILE,
+        "-o", PRODUCTS_FILE
     ]
     
     try:
@@ -164,7 +165,7 @@ def login(request: LoginRequest):
         "login",
         request.email,
         request.password,
-        "-out", "token.txt"
+        "-out", TOKEN_FILE
     ]
     
     try:

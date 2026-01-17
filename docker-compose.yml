@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      # Replace with your GitHub repository URL and desired branch
+      context: https://github.com/greg56/YazioWeb.git#:backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - yazio-data:/data
+    networks:
+      - yazio-net
+
+  frontend:
+    build:
+      # Replace with your GitHub repository URL and desired branch
+      context: https://github.com/greg56/YazioWeb.git#:frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - yazio-net
+
+volumes:
+  yazio-data:
+
+networks:
+  yazio-net:
+    driver: bridge
