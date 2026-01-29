@@ -16,8 +16,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DATA_DIR = "/data"
-EXPORTER_DIR = os.path.join(os.path.dirname(__file__), "backend", "yazio-exporter")
+DATA_DIR = os.getenv("DATA_DIR", "/data")
+if not os.path.exists(DATA_DIR) or not os.access(DATA_DIR, os.W_OK):
+    DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+    os.makedirs(DATA_DIR, exist_ok=True)
+
+EXPORTER_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "yazio-exporter")
 EXPORTER_BIN = os.path.join(EXPORTER_DIR, "YazioExport")
 DATA_FILE = os.path.join(DATA_DIR, "days.json")
 TOKEN_FILE = "token.txt"
@@ -91,6 +95,25 @@ def get_data():
                             if base_nutrients:
                                 product["nutrients"] = {
                                     k: v * amount for k, v in base_nutrients.items() if v is not None
+                                }
+                
+                if "recipe_portions" in consumed:
+                    for recipe in consumed["recipe_portions"]:
+                        r_id = recipe.get("recipe_id")
+                        if r_id and r_id in product_map:
+                            r_info = product_map[r_id]
+                            recipe["name"] = r_info["name"]
+                            recipe["base_unit"] = r_info.get("base_unit")
+                            
+                            # Calculate nutrients based on portion_count
+                            count = recipe.get("portion_count", 0)
+                            base_nutrients = r_info["nutrients"]
+                            if base_nutrients:
+                                # Start with direct multiplication (assuming nutrients are per portion or normalized to portion)
+                                # If the API returns nutrients per 100g for recipes, we might be in trouble without total weight.
+                                # But usually for recipes, Yazio works with portions.
+                                recipe["nutrients"] = {
+                                    k: v * count for k, v in base_nutrients.items() if v is not None
                                 }
                             
         return data

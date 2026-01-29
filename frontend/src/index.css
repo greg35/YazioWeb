@@ -6,3 +6,18 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+@media print {
+  @page {
+    margin: 0.5cm;
+  }
+  
+  .print\:break-after-page {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  body {
+    background: white;
+  }
+}

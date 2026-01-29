@@ -101,166 +101,168 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-8 font-sans relative">
-      <header className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
-            {t('app_title')}
-          </h1>
-          <p className="text-slate-400">{t('app_subtitle')}</p>
-        </div>
-        <div className="flex gap-4">
-          <button
-            onClick={() => setShowCalendar(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all border border-slate-700"
-          >
-            <CalendarIcon className="w-5 h-5" />
-            {t('calendar')}
-          </button>
-          <button
-            onClick={() => setShowWeeklyView(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all border border-slate-700"
-          >
-            <CalendarIcon className="w-5 h-5" />
-            {t('weekly_view')}
-          </button>
-          <button
-            onClick={() => setShowLogin(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all border border-slate-700"
-          >
-            <Settings className="w-5 h-5" />
-            {t('settings')}
-          </button>
-          <button
-            onClick={handleRefresh}
-            disabled={loading || !status.token_exists}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${loading
-              ? 'bg-slate-700 cursor-not-allowed text-slate-400'
-              : 'bg-violet-600 hover:bg-violet-700 text-white shadow-lg hover:shadow-violet-500/25'
-              }`}
-          >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? t('syncing') : t('sync_data')}
-          </button>
-        </div>
-      </header>
-
-      {!status.token_exists && (
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 mb-8 flex items-start gap-3 text-amber-200">
-          <AlertCircle className="w-6 h-6 shrink-0" />
+      <div className={showWeeklyView ? 'print:hidden' : ''}>
+        <header className="flex justify-between items-center mb-8">
           <div>
-            <h3 className="font-semibold">{t('auth_required')}</h3>
-            <p className="text-sm opacity-90">
-              {t('auth_msg')}
-            </p>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
+              {t('app_title')}
+            </h1>
+            <p className="text-slate-400">{t('app_subtitle')}</p>
           </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-8 flex items-center gap-3 text-red-200">
-          <AlertCircle className="w-6 h-6" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {data ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Calories Chart */}
-          <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
-            <div className="flex items-center gap-2 mb-6">
-              <Flame className="w-5 h-5 text-orange-400" />
-              <h2 className="text-xl font-semibold">{t('calories_trend')}</h2>
-            </div>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={data}
-                  onClick={(e) => {
-                    console.log('Chart clicked', e);
-                    if (e?.activePayload?.[0]) {
-                      console.log('Payload found', e.activePayload[0].payload);
-                      setSelectedDay(e.activePayload[0].payload);
-                    } else {
-                      console.log('No active payload');
-                    }
-                  }}
-                  className="cursor-pointer"
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                  <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickFormatter={(str) => str.slice(5)} />
-                  <YAxis stroke="#94a3b8" fontSize={12} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
-                    itemStyle={{ color: '#f1f5f9' }}
-                  />
-                  <Line type="monotone" dataKey="calories" stroke="#f97316" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setShowCalendar(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all border border-slate-700"
+            >
+              <CalendarIcon className="w-5 h-5" />
+              {t('calendar')}
+            </button>
+            <button
+              onClick={() => setShowWeeklyView(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all border border-slate-700"
+            >
+              <CalendarIcon className="w-5 h-5" />
+              {t('weekly_view')}
+            </button>
+            <button
+              onClick={() => setShowLogin(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all border border-slate-700"
+            >
+              <Settings className="w-5 h-5" />
+              {t('settings')}
+            </button>
+            <button
+              onClick={handleRefresh}
+              disabled={loading || !status.token_exists}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${loading
+                ? 'bg-slate-700 cursor-not-allowed text-slate-400'
+                : 'bg-violet-600 hover:bg-violet-700 text-white shadow-lg hover:shadow-violet-500/25'
+                }`}
+            >
+              <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? t('syncing') : t('sync_data')}
+            </button>
           </div>
+        </header>
 
-          {/* Macros Chart */}
-          <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
-            <div className="flex items-center gap-2 mb-6">
-              <Utensils className="w-5 h-5 text-emerald-400" />
-              <h2 className="text-xl font-semibold">{t('macros_dist')}</h2>
-            </div>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={data}
-                  onClick={(e) => {
-                    console.log('BarChart clicked', e);
-                    if (e?.activePayload?.[0]) {
-                      console.log('Payload found', e.activePayload[0].payload);
-                      setSelectedDay(e.activePayload[0].payload);
-                    }
-                  }}
-                  className="cursor-pointer"
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                  <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickFormatter={(str) => str.slice(5)} />
-                  <YAxis stroke="#94a3b8" fontSize={12} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
-                    cursor={{ fill: '#334155', opacity: 0.4 }}
-                  />
-                  <Legend />
-                  <Bar dataKey="protein" stackId="a" fill="#10b981" name={t('protein')} />
-                  <Bar dataKey="carbs" stackId="a" fill="#3b82f6" name={t('carbs')} />
-                  <Bar dataKey="fat" stackId="a" fill="#eab308" name={t('fat')} />
-                </BarChart>
-              </ResponsiveContainer>
+        {!status.token_exists && (
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 mb-8 flex items-start gap-3 text-amber-200">
+            <AlertCircle className="w-6 h-6 shrink-0" />
+            <div>
+              <h3 className="font-semibold">{t('auth_required')}</h3>
+              <p className="text-sm opacity-90">
+                {t('auth_msg')}
+              </p>
             </div>
           </div>
+        )}
 
-          {/* Water Chart */}
-          <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm lg:col-span-2">
-            <div className="flex items-center gap-2 mb-6">
-              <Droplets className="w-5 h-5 text-cyan-400" />
-              <h2 className="text-xl font-semibold">{t('water_intake')}</h2>
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-8 flex items-center gap-3 text-red-200">
+            <AlertCircle className="w-6 h-6" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {data ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Calories Chart */}
+            <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
+              <div className="flex items-center gap-2 mb-6">
+                <Flame className="w-5 h-5 text-orange-400" />
+                <h2 className="text-xl font-semibold">{t('calories_trend')}</h2>
+              </div>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={data}
+                    onClick={(e) => {
+                      console.log('Chart clicked', e);
+                      if (e?.activePayload?.[0]) {
+                        console.log('Payload found', e.activePayload[0].payload);
+                        setSelectedDay(e.activePayload[0].payload);
+                      } else {
+                        console.log('No active payload');
+                      }
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickFormatter={(str) => str.slice(5)} />
+                    <YAxis stroke="#94a3b8" fontSize={12} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
+                      itemStyle={{ color: '#f1f5f9' }}
+                    />
+                    <Line type="monotone" dataKey="calories" stroke="#f97316" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-            <div className="h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                  <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickFormatter={(str) => str.slice(5)} />
-                  <YAxis stroke="#94a3b8" fontSize={12} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
-                    cursor={{ fill: '#334155', opacity: 0.4 }}
-                  />
-                  <Bar dataKey="water" fill="#06b6d4" name={t('water_unit')} radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+
+            {/* Macros Chart */}
+            <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
+              <div className="flex items-center gap-2 mb-6">
+                <Utensils className="w-5 h-5 text-emerald-400" />
+                <h2 className="text-xl font-semibold">{t('macros_dist')}</h2>
+              </div>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={data}
+                    onClick={(e) => {
+                      console.log('BarChart clicked', e);
+                      if (e?.activePayload?.[0]) {
+                        console.log('Payload found', e.activePayload[0].payload);
+                        setSelectedDay(e.activePayload[0].payload);
+                      }
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickFormatter={(str) => str.slice(5)} />
+                    <YAxis stroke="#94a3b8" fontSize={12} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
+                      cursor={{ fill: '#334155', opacity: 0.4 }}
+                    />
+                    <Legend />
+                    <Bar dataKey="protein" stackId="a" fill="#10b981" name={t('protein')} />
+                    <Bar dataKey="carbs" stackId="a" fill="#3b82f6" name={t('carbs')} />
+                    <Bar dataKey="fat" stackId="a" fill="#eab308" name={t('fat')} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Water Chart */}
+            <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm lg:col-span-2">
+              <div className="flex items-center gap-2 mb-6">
+                <Droplets className="w-5 h-5 text-cyan-400" />
+                <h2 className="text-xl font-semibold">{t('water_intake')}</h2>
+              </div>
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickFormatter={(str) => str.slice(5)} />
+                    <YAxis stroke="#94a3b8" fontSize={12} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
+                      cursor={{ fill: '#334155', opacity: 0.4 }}
+                    />
+                    <Bar dataKey="water" fill="#06b6d4" name={t('water_unit')} radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center h-64 text-slate-500">
-          <p>{t('no_data')}</p>
-        </div>
-      )}
+        ) : (
+          <div className="flex flex-col items-center justify-center h-64 text-slate-500">
+            <p>{t('no_data')}</p>
+          </div>
+        )}
+      </div>
 
       {/* Login Modal */}
       {showLogin && (
