@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4] - 2026-01-30
+
+### Fixed
+- Fixed Docker build error "go.sum not found" by making the submodule cloning more robust in the Dockerfile.
+
+## [1.0.3] - 2026-01-30
+
+### Fixed
+- Added `.gitmodules` file to fix Docker build errors when cloning the repository remotely.
+
 ## [1.0.2] - 2026-01-30
 
 ### Fixed

@@ -1,16 +1,24 @@
 # Stage 1: Build the Go exporter
 FROM golang:1.22-alpine AS builder
 
+RUN apk add --no-cache git
+
+WORKDIR /app
+
+# Copy the backend files
+COPY backend/ .
+
+# Check if the submodule files are actually there. If not, clone them.
+RUN if [ ! -f "yazio-exporter/go.mod" ]; then \
+    echo "Submodule files missing, cloning from source..." && \
+    rm -rf yazio-exporter && \
+    git clone https://github.com/funmelon64/Yazio-Exporter.git yazio-exporter; \
+    fi
+
 WORKDIR /app/yazio-exporter
 
-# Copy go.mod and go.sum and download dependencies
-COPY backend/yazio-exporter/go.mod backend/yazio-exporter/go.sum ./
+# Download dependencies and build
 RUN go mod download
-
-# Copy the rest of the exporter source code
-COPY backend/yazio-exporter/ ./
-
-# Build the exporter
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app/YazioExport -v .
 
 # Stage 2: Create the Python environment
