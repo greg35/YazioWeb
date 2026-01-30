@@ -3,7 +3,7 @@ version: '3.8'
 services:
   backend:
     build:
-      context: ./backend
+      context: https://github.com/greg35/YazioWeb.git#main:backend
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
@@ -14,7 +14,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: https://github.com/greg35/YazioWeb.git#main:frontend
       dockerfile: Dockerfile
     ports:
       - "5173:5173"

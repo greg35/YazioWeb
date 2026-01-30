@@ -1,9 +1,20 @@
 # Stage 1: Build the Go exporter
 FROM golang:1.22-alpine AS builder
 
+# Install git to clone if needed
+RUN apk add --no-cache git
+
+WORKDIR /app
+
+# Clone if the directory is empty (happens with remote build context without submodules)
+RUN if [ ! -d "yazio-exporter" ] || [ ! -f "yazio-exporter/go.mod" ]; then \
+    git clone https://github.com/funmelon64/Yazio-Exporter.git yazio-exporter; \
+    fi
+
 WORKDIR /app/yazio-exporter
 
 # Copy go.mod and go.sum and download dependencies
+# (This still works if files are present, but now we have a fallback)
 COPY yazio-exporter/go.mod yazio-exporter/go.sum ./
 RUN go mod download
 
