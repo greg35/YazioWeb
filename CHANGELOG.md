@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.5] - 2026-01-30
+
+### Changed
+- Changed backend port from 8000 to 5172 to avoid port conflicts.
+
 ## [1.0.4] - 2026-01-30
 
 ### Fixed

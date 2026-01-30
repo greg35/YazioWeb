@@ -6,7 +6,7 @@ services:
       context: https://github.com/greg35/YazioWeb.git#main:backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "5172:5172"
     volumes:
       - yazio-data:/data
     networks:
