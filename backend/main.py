@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import subprocess
 import os
 import json
+import hashlib
+import secrets
 
 app = FastAPI()
 
@@ -25,15 +27,92 @@ EXPORTER_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "yazio-e
 EXPORTER_BIN = os.path.join(EXPORTER_DIR, "YazioExport")
 DATA_FILE = os.path.join(DATA_DIR, "days.json")
 TOKEN_FILE = "token.txt"
+CONFIG_FILE = os.path.join(DATA_DIR, "config.json")
+
+# --- Security Helpers ---
+
+def load_config():
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r") as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def save_config(config):
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(config, f)
+
+def hash_password(password: str, salt: str = None) -> (str, str):
+    if not salt:
+        salt = secrets.token_hex(16)
+    hashed = hashlib.sha256((password + salt).encode()).hexdigest()
+    return hashed, salt
+
+# --- Endpoints ---
 
 @app.get("/api/status")
 def get_status():
-    """Check if exporter binary and token exist."""
+    """Check if exporter binary, token exist, and if security is enabled."""
+    config = load_config()
     return {
         "exporter_exists": os.path.exists(EXPORTER_BIN),
         "token_exists": os.path.exists(os.path.join(EXPORTER_DIR, TOKEN_FILE)),
-        "data_exists": os.path.exists(DATA_FILE)
+        "data_exists": os.path.exists(DATA_FILE),
+        "security_enabled": config.get("security_enabled", False)
     }
+
+class SecuritySetRequest(BaseModel):
+    password: str
+    enabled: bool
+
+@app.post("/api/security/set")
+def set_security(request: SecuritySetRequest):
+    """Set or disable password protection."""
+    config = load_config()
+    
+    if request.enabled:
+        if not request.password:
+             raise HTTPException(status_code=400, detail="Password required to enable security")
+        hashed, salt = hash_password(request.password)
+        config["password_hash"] = hashed
+        config["password_salt"] = salt
+        config["security_enabled"] = True
+    else:
+        config["security_enabled"] = False
+        # We don't necessarily need to delete the hash, but we can
+        # config.pop("password_hash", None)
+        # config.pop("password_salt", None)
+    
+    save_config(config)
+    return {"status": "success", "security_enabled": config["security_enabled"]}
+
+class VerifyRequest(BaseModel):
+    password: str
+
+@app.post("/api/security/verify")
+def verify_security(request: VerifyRequest):
+    """Verify password."""
+    config = load_config()
+    if not config.get("security_enabled", False):
+        return {"success": True} # If disabled, always success
+        
+    stored_hash = config.get("password_hash")
+    stored_salt = config.get("password_salt")
+    
+    if not stored_hash or not stored_salt:
+        # Invalid state, allow entry to fix it or block? 
+        # Safest is to allow if enabled but no pass (shouldn't happen) or block.
+        # Let's say if enabled but data missing, fail.
+        raise HTTPException(status_code=401, detail="Security configuration error")
+
+    hashed, _ = hash_password(request.password, stored_salt)
+    
+    if hashed == stored_hash:
+        return {"success": True}
+    else:
+        raise HTTPException(status_code=401, detail="Invalid password")
 
 @app.get("/api/data")
 def get_data():

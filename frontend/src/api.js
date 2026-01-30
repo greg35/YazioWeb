@@ -37,3 +37,33 @@ export const login = async (email, password) => {
     }
     return response.json();
 };
+
+export const setSecurity = async (password, enabled) => {
+    const response = await fetch(`${API_BASE}/security/set`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password, enabled }),
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to update security settings');
+    }
+    return response.json();
+};
+
+export const verifySecurity = async (password) => {
+    const response = await fetch(`${API_BASE}/security/verify`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Verification failed');
+    }
+    return response.json();
+};

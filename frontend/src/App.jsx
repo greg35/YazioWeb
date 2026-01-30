@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { checkStatus, getData, refreshData, login } from './api';
+import { checkStatus, getData, refreshData, login, setSecurity } from './api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { RefreshCw, AlertCircle, CheckCircle, Droplets, Flame, Utensils, Settings, X, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { RefreshCw, AlertCircle, CheckCircle, Droplets, Flame, Utensils, Settings, X, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
 import Calendar from './Calendar';
 import WeeklyView from './WeeklyView';
+import LockScreen from './LockScreen';
 import { LanguageProvider, useLanguage } from './LanguageContext';
 import './index.css';
 
@@ -20,6 +21,13 @@ function AppContent() {
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState(null);
+  const [chartMode, setChartMode] = useState('daily'); // 'daily' or 'weekly'
+
+  // Security State
+  const [isLocked, setIsLocked] = useState(false);
+  const [securityEnabled, setSecurityEnabled] = useState(false);
+  const [securityPassword, setSecurityPassword] = useState('');
+  const [securityMessage, setSecurityMessage] = useState('');
 
   const [selectedDay, setSelectedDay] = useState(null);
 
@@ -31,6 +39,13 @@ function AppContent() {
     try {
       const statusRes = await checkStatus();
       setStatus(statusRes);
+      
+      // Handle Security Status
+      setSecurityEnabled(statusRes.security_enabled);
+      if (statusRes.security_enabled && !sessionStorage.getItem('app_unlocked')) {
+          setIsLocked(true);
+      }
+
       if (statusRes.data_exists) {
         const dataRes = await getData();
         setData(processData(dataRes));
@@ -38,6 +53,33 @@ function AppContent() {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handleUnlock = () => {
+      setIsLocked(false);
+      sessionStorage.setItem('app_unlocked', 'true');
+  };
+
+  const handleSetSecurity = async (e) => {
+      e.preventDefault();
+      setSecurityMessage('');
+      try {
+          // If enabling, we need a password. If disabling, we send empty password but enabled=false
+          const newEnabledState = !securityEnabled;
+          if (newEnabledState && !securityPassword) return;
+
+          await setSecurity(securityPassword, newEnabledState);
+          setSecurityEnabled(newEnabledState);
+          setSecurityPassword('');
+          setSecurityMessage(t('security_updated'));
+          
+          // Refresh status to ensure consistency
+          const statusRes = await checkStatus();
+          setStatus(statusRes);
+
+      } catch (err) {
+          setSecurityMessage(err.message);
+      }
   };
 
   const handleRefresh = async () => {
@@ -74,6 +116,7 @@ function AppContent() {
       .map(([date, dayData]) => ({
         date,
         calories: dayData.daily?.energy || 0,
+        calorieGoal: dayData.daily?.energy_goal || dayData.goals?.["energy.energy"] || 0,
         carbs: dayData.daily?.carb || 0,
         protein: dayData.daily?.protein || 0,
         fat: dayData.daily?.fat || 0,
@@ -81,6 +124,32 @@ function AppContent() {
         originalData: dayData // Store original data for details view
       }))
       .sort((a, b) => new Date(a.date) - new Date(b.date));
+  };
+
+  const getWeekKey = (dateStr) => {
+    const date = new Date(dateStr);
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+    return `${d.getUTCFullYear()}-${String(weekNo).padStart(2, '0')}`;
+  };
+
+  const processWeeklyData = (dailyData) => {
+    if (!dailyData) return [];
+    
+    const aggregated = dailyData.reduce((acc, curr) => {
+      const key = getWeekKey(curr.date);
+      if (!acc[key]) {
+        acc[key] = { date: key, calories: 0, calorieGoal: 0 };
+      }
+      acc[key].calories += curr.calories;
+      acc[key].calorieGoal += curr.calorieGoal;
+      return acc;
+    }, {});
+
+    return Object.values(aggregated).sort((a, b) => a.date.localeCompare(b.date));
   };
 
   const getMealItems = (dayData, mealType) => {
@@ -98,6 +167,16 @@ function AppContent() {
   };
 
   if (!status) return <div className="flex items-center justify-center h-screen text-white">Loading...</div>;
+
+  if (isLocked) {
+      return (
+          <LanguageProvider>
+              <LockScreen onUnlock={handleUnlock} />
+          </LanguageProvider>
+      );
+  }
+
+  const chartData = chartMode === 'weekly' ? processWeeklyData(data) : data;
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-8 font-sans relative">
@@ -168,15 +247,36 @@ function AppContent() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Calories Chart */}
             <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
-              <div className="flex items-center gap-2 mb-6">
-                <Flame className="w-5 h-5 text-orange-400" />
-                <h2 className="text-xl font-semibold">{t('calories_trend')}</h2>
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-orange-400" />
+                  <h2 className="text-xl font-semibold">{t('calories_trend')}</h2>
+                </div>
+                <div className="flex bg-slate-700/50 p-1 rounded-lg">
+                  <button
+                    onClick={() => setChartMode('daily')}
+                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+                      chartMode === 'daily' ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {t('view_daily')}
+                  </button>
+                  <button
+                    onClick={() => setChartMode('weekly')}
+                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+                      chartMode === 'weekly' ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {t('view_weekly')}
+                  </button>
+                </div>
               </div>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
-                    data={data}
+                    data={chartData}
                     onClick={(e) => {
+                      if (chartMode === 'weekly') return; // Disable click in weekly mode
                       console.log('Chart clicked', e);
                       if (e?.activePayload?.[0]) {
                         console.log('Payload found', e.activePayload[0].payload);
@@ -185,16 +285,22 @@ function AppContent() {
                         console.log('No active payload');
                       }
                     }}
-                    className="cursor-pointer"
+                    className={chartMode === 'daily' ? "cursor-pointer" : ""}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickFormatter={(str) => str.slice(5)} />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="#94a3b8" 
+                      fontSize={12} 
+                      tickFormatter={(str) => chartMode === 'weekly' ? str : str.slice(5)} 
+                    />
                     <YAxis stroke="#94a3b8" fontSize={12} />
                     <Tooltip
                       contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
                       itemStyle={{ color: '#f1f5f9' }}
                     />
-                    <Line type="monotone" dataKey="calories" stroke="#f97316" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                    <Line type="monotone" dataKey="calories" stroke="#f97316" strokeWidth={3} dot={false} activeDot={{ r: 6 }} name={t('calories')} />
+                    <Line type="monotone" dataKey="calorieGoal" stroke="#3b82f6" strokeWidth={2} strokeDasharray="5 5" dot={false} name={t('calorie_goal') || "Objectif"} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -299,6 +405,44 @@ function AppContent() {
                   English
                 </button>
               </div>
+            </div>
+
+            <div className="mb-8 pb-8 border-b border-slate-700">
+                <h3 className="text-xl font-bold mb-4 text-white">{t('security_settings')}</h3>
+                
+                {securityMessage && (
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4 text-blue-200 text-sm">
+                        {securityMessage}
+                    </div>
+                )}
+
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <label className="text-slate-300">{t('enable_password')}</label>
+                        <button 
+                            onClick={handleSetSecurity}
+                            className={`w-12 h-6 rounded-full transition-colors relative ${securityEnabled ? 'bg-violet-600' : 'bg-slate-600'}`}
+                            disabled={!securityEnabled && !securityPassword} // Require password to enable
+                        >
+                            <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${securityEnabled ? 'left-7' : 'left-1'}`} />
+                        </button>
+                    </div>
+
+                    {!securityEnabled && (
+                        <div>
+                            <input
+                                type="password"
+                                placeholder={t('set_password')}
+                                value={securityPassword}
+                                onChange={(e) => setSecurityPassword(e.target.value)}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">
+                                {t('enter_password')}
+                            </p>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <h3 className="text-xl font-bold mb-4 text-white">{t('login_title')}</h3>

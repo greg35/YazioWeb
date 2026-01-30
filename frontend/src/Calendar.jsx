@@ -52,6 +52,10 @@ const Calendar = ({ data, onSelectDay, onClose }) => {
     for (let i = 1; i <= days; i++) {
       const dayData = getDayData(i);
       const isToday = isSameDay(new Date(), new Date(currentDate.getFullYear(), currentDate.getMonth(), i));
+      
+      const hasGoal = dayData && dayData.calorieGoal > 0;
+      const isUnderGoal = hasGoal && dayData.calories <= dayData.calorieGoal;
+      const isOverGoal = hasGoal && dayData.calories > dayData.calorieGoal;
 
       daysArray.push(
         <button
@@ -60,7 +64,9 @@ const Calendar = ({ data, onSelectDay, onClose }) => {
           disabled={!dayData}
           className={`h-24 p-2 rounded-lg border transition-all flex flex-col items-start justify-between relative group
             ${dayData
-              ? 'bg-slate-800 border-slate-700 hover:border-violet-500 hover:bg-slate-700 cursor-pointer'
+              ? (isOverGoal 
+                  ? 'bg-red-500/10 border-red-500/50 hover:bg-red-500/20 hover:border-red-400' 
+                  : (isUnderGoal ? 'bg-emerald-500/10 border-emerald-500/50 hover:bg-emerald-500/20 hover:border-emerald-400' : 'bg-slate-800 border-slate-700 hover:bg-slate-700'))
               : 'bg-slate-800/30 border-transparent cursor-default opacity-50'}
             ${isToday ? 'ring-2 ring-violet-500' : ''}
           `}
@@ -69,14 +75,14 @@ const Calendar = ({ data, onSelectDay, onClose }) => {
 
           {dayData && (
             <div className="w-full">
-              <div className="flex items-center gap-1 text-xs text-orange-400 font-medium">
+              <div className={`flex items-center gap-1 text-xs font-medium ${isOverGoal ? 'text-red-400' : (isUnderGoal ? 'text-emerald-400' : 'text-orange-400')}`}>
                 <span>{Math.round(dayData.calories)}</span>
                 <span className="text-[10px] text-slate-500">kcal</span>
               </div>
               <div className="w-full bg-slate-700 h-1.5 rounded-full mt-1 overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
-                  style={{ width: `${Math.min((dayData.calories / 2500) * 100, 100)}%` }} // Assuming 2500 target for visual
+                  className={`h-full ${isOverGoal ? 'bg-red-500' : (isUnderGoal ? 'bg-emerald-500' : 'bg-violet-500')}`}
+                  style={{ width: `${Math.min((dayData.calories / (dayData.calorieGoal || 2000)) * 100, 100)}%` }}
                 />
               </div>
             </div>
