@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:5172/api';
+const API_BASE = '/api';
 
 export const checkStatus = async () => {
     const response = await fetch(`${API_BASE}/status`);
