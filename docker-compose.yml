@@ -1,25 +1,12 @@
-version: '3.8'
-
 services:
-  backend:
+  app:
     build:
-      context: https://github.com/greg35/YazioWeb.git#main:backend
+      context: .
       dockerfile: Dockerfile
     ports:
       - "5172:5172"
     volumes:
       - yazio-data:/data
-    networks:
-      - yazio-net
-
-  frontend:
-    build:
-      context: https://github.com/greg35/YazioWeb.git#main:frontend
-      dockerfile: Dockerfile
-    ports:
-      - "5173:5173"
-    depends_on:
-      - backend
     networks:
       - yazio-net
 

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2026-02-03
+
+### Changed
+- **Unified Architecture:** Refactored the Docker setup to run both backend and frontend in a single container.
+- Simplified `docker-compose.yml` and removed separate Dockerfiles.
+- Updated GitHub Actions workflow to build and push a single unified image.
+- Updated documentation to reflect the new architecture.
+
 ## [1.0.5] - 2026-01-30
 
 ### Changed

@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import subprocess
@@ -281,6 +283,34 @@ def login(request: LoginRequest):
         return {"status": "success", "message": "Login successful"}
     except subprocess.CalledProcessError as e:
         raise HTTPException(status_code=401, detail=f"Login failed: {e.stderr}")
+
+# --- Static File Serving ---
+# Mount static files and handle SPA routing
+# This must be placed after API routes to ensure API calls are not swallowed if namespaces collide
+# essentially, we rely on FastAPI matching specific API routes first.
+
+static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+
+if os.path.exists(static_dir):
+    # Mount assets folder for direct access (e.g., /assets/index-D1...js)
+    assets_dir = os.path.join(static_dir, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    # Catch-all for SPA
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Prevent API paths from returning HTML (though they should be matched by now)
+        if full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="API endpoint not found")
+
+        # Check if a physical file exists (e.g. favicon.ico, manifest.json)
+        file_path = os.path.join(static_dir, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        
+        # Otherwise serve index.html
+        return FileResponse(os.path.join(static_dir, "index.html"))
 
 if __name__ == "__main__":
     import uvicorn

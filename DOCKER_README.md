@@ -13,81 +13,53 @@ There are two ways to run the application using the provided `docker-compose.yml
 
 ### 1. Local Development
 
-If you have the source code on your local machine, you need to modify the `docker-compose.yml` to use local build contexts.
-
-Change the `build` sections for both `frontend` and `backend` services as follows:
-
-```yaml
-# In docker-compose.yml
-
-services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    # ... rest of the service config
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    # ... rest of the service config
-```
-
-Then, you can run the application with:
+You can run the application directly from the source code:
 
 ```bash
 docker-compose up --build
 ```
 
-### 2. From GitHub (for Portainer or remote deployment)
+This uses the `Dockerfile` at the root of the project to build a single container housing both the frontend and backend.
 
-The `docker-compose.yml` is configured to build the images directly from a GitHub repository.
+### 2. From GitHub (Pre-built Image)
 
-You need to replace the placeholder URL with your actual GitHub repository URL in the `build.context` for both services.
+The `docker-compose.yml` is configured to build the image locally by default. To use a pre-built image from GitHub Container Registry (if available), you would need to adjust the `image` field in `docker-compose.yml`, but currently, the setup is optimized for building from source or the context provided.
+
+If you wish to build directly from the remote repository without cloning:
 
 ```yaml
-# In docker-compose.yml
-
 services:
-  backend:
+  app:
     build:
-      # Replace with your GitHub repository URL and desired branch
-      context: https://github.com/greg56/YazioWeb.git#:backend
+      context: https://github.com/greg56/YazioWeb.git
       dockerfile: Dockerfile
-    # ... rest of the service config
-
-  frontend:
-    build:
-      # Replace with your GitHub repository URL and desired branch
-      context: https://github.com/greg56/YazioWeb.git#:frontend
-      dockerfile: Dockerfile
-    # ... rest of the service config
+    ports:
+      - "5172:5172"
+    volumes:
+      - yazio-data:/data
+    networks:
+      - yazio-net
 ```
 
-Once you have updated the URL, you can deploy this `docker-compose.yml` in Portainer or run it with `docker-compose up --build`.
+The application will be available at [http://localhost:5172](http://localhost:5172).
 
-The frontend will be available at [http://localhost:5173](http://localhost:5173).
+## Architecture
 
-## Services
+The project now uses a **Unified Architecture** where both the frontend and backend run in a single Docker container.
 
-### Backend
-
-- **Dockerfile:** `backend/Dockerfile`
-- **Description:** A Python FastAPI application that serves the Yazio data. It uses a Go binary to scrape the data from Yazio.
-- **Ports:** The backend is available at port `8000` within the Docker network.
-
-### Frontend
-
-- **Dockerfile:** `frontend/Dockerfile`
-- **Description:** A React application that provides the user interface for visualizing the Yazio data.
-- **Ports:** The frontend is exposed on port `5173`.
+- **Dockerfile:** `./Dockerfile` (Root directory)
+- **Description:** 
+    1.  **Stage 1 (Frontend):** Builds the React frontend using Node.js.
+    2.  **Stage 2 (Exporter):** Builds the Go exporter binary.
+    3.  **Stage 3 (Final):** Sets up a Python environment, copies the backend code, the compiled Go binary, and the static frontend assets. It serves the API using FastAPI and the frontend as static files.
+- **Port:** Exposed on port `5172`.
 
 ## Data Persistence
 
-The `docker-compose.yml` defines a named volume called `yazio-data`. This volume is mounted to the `/data` directory in the `backend` container. It is used to store:
+The `docker-compose.yml` defines a named volume called `yazio-data`. This volume is mounted to the `/data` directory in the container. It is used to store:
 - `days.json`
 - `products.json`
 - `token.txt`
+- `config.json`
 
-This ensures that your data is not lost when you stop or restart the containers.
+This ensures that your data and login session are not lost when you stop or restart the containers.
