@@ -181,21 +181,24 @@ def get_data():
                 if "recipe_portions" in consumed:
                     for recipe in consumed["recipe_portions"]:
                         r_id = recipe.get("recipe_id")
-                        if r_id and r_id in product_map:
-                            r_info = product_map[r_id]
-                            recipe["name"] = r_info["name"]
-                            recipe["base_unit"] = r_info.get("base_unit")
-                            
-                            # Calculate nutrients based on portion_count
-                            count = recipe.get("portion_count", 0)
-                            base_nutrients = r_info["nutrients"]
-                            if base_nutrients:
-                                # Start with direct multiplication (assuming nutrients are per portion or normalized to portion)
-                                # If the API returns nutrients per 100g for recipes, we might be in trouble without total weight.
-                                # But usually for recipes, Yazio works with portions.
-                                recipe["nutrients"] = {
-                                    k: v * count for k, v in base_nutrients.items() if v is not None
-                                }
+                        if r_id:
+                            if r_id in product_map:
+                                r_info = product_map[r_id]
+                                recipe["name"] = r_info["name"]
+                                # Use default unit if not present (recipes often don't have base_unit at top level)
+                                recipe["base_unit"] = r_info.get("base_unit", "g")
+                                
+                                # Calculate nutrients based on portion_count
+                                count = recipe.get("portion_count", 0)
+                                base_nutrients = r_info.get("nutrients")
+                                if base_nutrients:
+                                    recipe["nutrients"] = {
+                                        k: v * count for k, v in base_nutrients.items() if v is not None
+                                    }
+                            else:
+                                print(f"[WARNING] Recipe ID {r_id} found in day data but NOT in products.json. This usually means the exporter failed to fetch it or the regex didn't match.")
+                        else:
+                            print(f"[WARNING] Recipe portion found without recipe_id: {recipe}")
                             
         return data
     except Exception as e:

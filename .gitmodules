@@ -1,3 +1,0 @@
-[submodule "backend/yazio-exporter"]
-	path = backend/yazio-exporter
-	url = https://github.com/funmelon64/Yazio-Exporter.git
